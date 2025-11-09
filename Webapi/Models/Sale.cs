@@ -4,11 +4,10 @@
     {
         public int Id { get; set; }
         public String Client { get; set; }
-        public string Product { get; set; }
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-        public decimal TotalPrice { get; set; }
         public DateTime Date { get; set; } = DateTime.Now;
+        public decimal Total { get; set; }
+        public ICollection<SaleDetail> Details { get; set; }
+
 
     }
 }

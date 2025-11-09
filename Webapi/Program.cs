@@ -1,6 +1,7 @@
 ﻿using Webapi.Data;
 using Microsoft.EntityFrameworkCore;
 using Webapi.Repositories;
+using Webapi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,8 +24,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.WebHost.UseUrls("http://localhost:5132", "http://192.168.1.18:5132");
+builder.WebHost.UseUrls("http://localhost:5132", "http://192.168.1.16:5132");
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<Userservice>();
+builder.Services.AddScoped<Saleservice>();
 
 var app = builder.Build();
 

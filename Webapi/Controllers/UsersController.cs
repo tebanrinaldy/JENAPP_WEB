@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Webapi.Data;
 using Webapi.Models;
 using Webapi.Repositories;
+using Webapi.Services;
 
 namespace Webapi.Controllers
 {
@@ -15,18 +16,18 @@ namespace Webapi.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly IRepository<User> _repository;
+        private readonly Userservice _userservice;
 
-        public UsersController(IRepository<User> repository)
+        public UsersController(Userservice userservice)
         {
-            _repository = repository;
+            _userservice = userservice;
         }
 
         // GET: api/Users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-            var users = await _repository.GetAllAsync();
+            var users = await _userservice.GetAllUsersAsync();
             return Ok(users);
         }
 
@@ -34,7 +35,7 @@ namespace Webapi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-            var user = await _repository.GetByIdAsync(id);
+            var user = await _userservice.GetUserByIdAsync(id);
             if (user == null)
                 return NotFound();
             return Ok(user);
@@ -50,8 +51,12 @@ namespace Webapi.Controllers
             {
                 return BadRequest();
             }
+            if (!string.IsNullOrEmpty(user.Password))
+            {
+                user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
+            }
 
-            await _repository.UpdateAsync(user);
+            await _userservice.UpdateUserAsync(user);
 
             return NoContent();
         }
@@ -61,7 +66,8 @@ namespace Webapi.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            await _repository.AddAsync(user);
+
+            await _userservice.RegisterUser(user);
 
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
         }
@@ -70,12 +76,33 @@ namespace Webapi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _repository.GetByIdAsync(id);
+            var user = await _userservice.GetUserByIdAsync(id);
             if (user == null)
                  return NotFound();
 
-            await _repository.DeleteAsync(id);
+            await _userservice.DeleteUserAsync(id);
             return NoContent();
         }
+        // 🟣 POST: api/users/Login 
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto login)
+        {
+            var user = await _userservice.ValidateUser(login.Username, login.Password);
+
+            if (user == null)
+                return Unauthorized("Usuario o contraseña incorrectos");
+
+            return Ok(new
+            {
+                message = "Inicio de sesión exitoso",
+                user = new { user.Id, user.Username }
+            });
+        }
+        public class LoginDto
+        {
+            public string Username { get; set; }
+            public string Password { get; set; } 
+        }
+
     }
 }

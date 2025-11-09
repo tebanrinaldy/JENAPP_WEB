@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Webapi.Data;
 using Webapi.Models;
+using Webapi.Services;
 
 namespace Webapi.Controllers
 {
@@ -14,102 +15,67 @@ namespace Webapi.Controllers
     [ApiController]
     public class SalesController : ControllerBase
     {
-        private readonly Connectioncontextdb _context;
+        private readonly Saleservice _saleservice;
 
-        public SalesController(Connectioncontextdb context)
+        public SalesController(Saleservice saleservice)
         {
-            _context = context;
+            _saleservice = saleservice;
         }
 
         // GET: api/Sales
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Sale>>> GetSales()
         {
-            return await _context.Sales.ToListAsync();
+            var sales = await _saleservice.GetAllSalesAsync();
+
+            return Ok(sales);
         }
 
         // GET: api/Sales/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Sale>> GetSale(int id)
         {
-            var sale = await _context.Sales.FindAsync(id);
+            var sale = await _saleservice.GetSaleByIdAsync(id);
 
             if (sale == null)
             {
                 return NotFound();
             }
 
-            return sale;
-        }
-
-        // PUT: api/Sales/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutSale(int id, Sale sale)
-        {
-            if (id != sale.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(sale).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!SaleExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return Ok(sale);
         }
 
         // POST: api/Sales
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Sale>> PostSale(Sale sale)
+        public async Task<ActionResult<Sale>> PostSale([FromBody] Sale sale)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            sale.TotalPrice = sale.Quantity * sale.UnitPrice;
-            sale.Date = DateTime.Now;
-
-            _context.Sales.Add(sale);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetSale), new { id = sale.Id }, sale);
+            try
+            {
+                var createdSale = await _saleservice.CreateSaleAsync(sale);
+                return CreatedAtAction(nameof(GetSale), new { id = createdSale.Id }, createdSale);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
-
+        
 
         // DELETE: api/Sales/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSale(int id)
-        {
-            var sale = await _context.Sales.FindAsync(id);
-            if (sale == null)
             {
-                return NotFound();
+                try
+                {
+                    await _saleservice.DeleteSaleAsync(id);
+                    return NoContent();
+                }
+                catch (KeyNotFoundException)
+                {
+                    return NotFound();
+                }
+
             }
-
-            _context.Sales.Remove(sale);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool SaleExists(int id)
-        {
-            return _context.Sales.Any(e => e.Id == id);
-        }
     }
 }
