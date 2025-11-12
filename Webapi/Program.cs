@@ -1,5 +1,6 @@
-﻿using Webapi.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Webapi;
+using Webapi.Data;
 using Webapi.Repositories;
 using Webapi.Services;
 
@@ -25,6 +26,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.WebHost.UseUrls("http://localhost:5132", "http://192.168.1.16:5132");
+builder.Services.AddScoped<JwtTokensGenerator>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<Userservice>();
 builder.Services.AddScoped<Saleservice>();

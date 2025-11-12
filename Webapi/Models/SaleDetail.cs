@@ -3,7 +3,7 @@ namespace Webapi.Models
 {
     public class SaleDetail
     {
-        public int Id { get; set; }
+        public int Id { get; set; } 
         public int SaleId { get; set; }
         [JsonIgnore]
         public Sale ? Sale { get; set; }

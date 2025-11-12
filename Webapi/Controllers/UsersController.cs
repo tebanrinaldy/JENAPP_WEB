@@ -9,6 +9,8 @@ using Webapi.Data;
 using Webapi.Models;
 using Webapi.Repositories;
 using Webapi.Services;
+using BCrypt.Net;
+using Webapi;
 
 namespace Webapi.Controllers
 {
@@ -17,10 +19,12 @@ namespace Webapi.Controllers
     public class UsersController : ControllerBase
     {
         private readonly Userservice _userservice;
+        private readonly JwtTokensGenerator _jwtTokensGenerator;
 
-        public UsersController(Userservice userservice)
+        public UsersController(Userservice userservice, JwtTokensGenerator jwtTokensGenerator)
         {
             _userservice = userservice;
+            _jwtTokensGenerator = jwtTokensGenerator;
         }
 
         // GET: api/Users
@@ -92,12 +96,17 @@ namespace Webapi.Controllers
             if (user == null)
                 return Unauthorized("Usuario o contraseña incorrectos");
 
+            var token = _jwtTokensGenerator.GenerateToken(user.Username);
+
             return Ok(new
             {
                 message = "Inicio de sesión exitoso",
-                user = new { user.Id, user.Username }
+                user = new { user.Id, user.Username },
+                token   
             });
         }
+
+
         public class LoginDto
         {
             public string Username { get; set; }
