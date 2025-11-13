@@ -3,6 +3,10 @@ using Webapi;
 using Webapi.Data;
 using Webapi.Repositories;
 using Webapi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +29,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.WebHost.UseUrls("http://localhost:5132", "http://192.168.1.16:5132");
+builder.WebHost.UseUrls("http://localhost:5132", "http://192.168.137.96:5132");
 builder.Services.AddScoped<JwtTokensGenerator>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<Userservice>();
@@ -33,6 +37,20 @@ builder.Services.AddScoped<Saleservice>();
 builder.Services.AddScoped<Productservice>();
 builder.Services.AddScoped<Inventoryservice>();
 
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JWTSettings:Key"]))
+    }
+    );
+
+builder.Services.AddAuthentication();
 var app = builder.Build();
 
 
@@ -46,6 +64,8 @@ if (app.Environment.IsDevelopment())
 //app.UseHttpsRedirection();
 
 app.UseCors("PermitirTodo");
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

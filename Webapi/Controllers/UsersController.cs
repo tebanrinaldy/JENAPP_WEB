@@ -11,6 +11,7 @@ using Webapi.Repositories;
 using Webapi.Services;
 using BCrypt.Net;
 using Webapi;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Webapi.Controllers
 {
@@ -28,7 +29,9 @@ namespace Webapi.Controllers
         }
 
         // GET: api/Users
+        [Authorize]
         [HttpGet]
+       
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
             var users = await _userservice.GetAllUsersAsync();
