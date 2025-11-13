@@ -30,6 +30,8 @@ builder.Services.AddScoped<JwtTokensGenerator>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<Userservice>();
 builder.Services.AddScoped<Saleservice>();
+builder.Services.AddScoped<Productservice>();
+builder.Services.AddScoped<Inventoryservice>();
 
 var app = builder.Build();
 

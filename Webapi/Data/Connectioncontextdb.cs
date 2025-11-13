@@ -13,6 +13,7 @@ namespace Webapi.Data
         public DbSet<Product> Products { get; set; } 
         public DbSet<Sale> Sales { get; set; }
         public DbSet<SaleDetail> SaleDetails { get; set; }
+        public DbSet<Webapi.Models.InventoryMovement> InventoryMovement { get; set; } = default!;
     }
 
 }

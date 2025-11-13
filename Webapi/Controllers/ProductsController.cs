@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Webapi.Data;
 using Webapi.Models;
+using Webapi.Services;
 
 namespace Webapi.Controllers
 {
@@ -15,10 +16,11 @@ namespace Webapi.Controllers
     public class ProductsController : ControllerBase
     {
         private readonly Connectioncontextdb _context;
-
-        public ProductsController(Connectioncontextdb context)
+        private readonly Productservice _productservice;
+        public ProductsController(Connectioncontextdb context, Productservice productservice)
         {
             _context = context;
+            _productservice = productservice;
         }
 
         // GET: api/Products
@@ -51,7 +53,13 @@ namespace Webapi.Controllers
             {
                 return BadRequest();
             }
-
+            try
+            {
+                _productservice.Updatestock(product);
+            } catch (ArgumentException ex)
+            { 
+                return BadRequest (new {message = ex.Message});
+            }
             _context.Entry(product).State = EntityState.Modified;
 
             try
@@ -60,14 +68,10 @@ namespace Webapi.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ProductExists(id))
-                {
+                if (!_context.Products.Any(e => e.Id == id))
                     return NotFound();
-                }
                 else
-                {
                     throw;
-                }
             }
 
             return NoContent();
@@ -78,6 +82,15 @@ namespace Webapi.Controllers
         [HttpPost]
         public async Task<ActionResult<Product>> PostProduct(Product product)
         {
+            try
+            {
+                _productservice.Initialstock(product);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
@@ -98,11 +111,6 @@ namespace Webapi.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool ProductExists(int id)
-        {
-            return _context.Products.Any(e => e.Id == id);
         }
     }
 }

@@ -34,7 +34,17 @@ namespace Webapi.Services
                 throw new ArgumentException("La venta debe tener al menos un detalle.");
 
             foreach (var detail in sale.Details)
+            {
+                var product = await _context.Products.FindAsync(detail.ProductId);
+                if (product == null)
+                    throw new KeyNotFoundException($"Producto con ID {detail.ProductId} no existe.");
+                if (product.Stock < detail.Quantity)
+                    throw new ArgumentException($"No hay suficiente stock para el producto {product.Name}.");
+                detail.UnitPrice = product.Price;
                 detail.TotalPrice = detail.Quantity * detail.UnitPrice;
+                product.Stock -= detail.Quantity;
+                _context.Products.Update(product);
+            }
             sale.Total = sale.Details.Sum(d => d.TotalPrice);
             sale.Date = DateTime.Now;
             _context.Sales.Add(sale);
