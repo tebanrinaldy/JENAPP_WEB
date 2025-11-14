@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.IO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
 using Webapi.Data;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-
 namespace Webapi.Controllers
 {
     [ApiController]
@@ -15,14 +17,15 @@ namespace Webapi.Controllers
     public class ReportsController : ControllerBase
     {
         private readonly Connectioncontextdb _context;
+        private readonly IWebHostEnvironment _env;   // para ruta del logo
 
-        public ReportsController(Connectioncontextdb context)
+        public ReportsController(Connectioncontextdb context, IWebHostEnvironment env)
         {
             _context = context;
+            _env = env;
         }
 
-        // ✅ Compatibilidad con el endpoint original por día
-        // GET: api/reports/daily-details?date=2025-11-14
+       
         [HttpGet("daily-details")]
         public Task<IActionResult> GetDailyDetails([FromQuery] DateTime date)
         {
@@ -30,9 +33,7 @@ namespace Webapi.Controllers
             return GetDetails(date, date);
         }
 
-        // ✅ Endpoint general: por día o por rango (JSON)
-        // GET: api/reports/details?from=2025-11-14
-        // GET: api/reports/details?from=2025-11-14&to=2025-11-16
+    
         [HttpGet("details")]
         public async Task<IActionResult> GetDetails(
             [FromQuery] DateTime from,
@@ -90,7 +91,7 @@ namespace Webapi.Controllers
             return Ok(resultado);
         }
 
-        // 🔹 NUEVO: endpoint para EXPORTAR PDF con el MISMO rango
+        // 🔹 Endpoint para EXPORTAR PDF con el MISMO rango
         // GET: api/reports/details/pdf?from=2025-11-14
         // GET: api/reports/details/pdf?from=2025-11-14&to=2025-11-16
         [HttpGet("details/pdf")]
@@ -161,16 +162,29 @@ namespace Webapi.Controllers
             public decimal TotalPrice { get; set; }
         }
 
-        // 🔹 Generación del PDF con QuestPDF
+        // 🔹 Generación del PDF con QuestPDF (logo + header + footer)
         private byte[] GenerarReporteDetallesPdf(
             DateTime desde,
             DateTime hasta,
             decimal total,
             int ventasDistintas,
             decimal promedio,
-            System.Collections.Generic.List<ReportRow> filas
+            List<ReportRow> filas
         )
         {
+            // Cargar logo desde carpeta Images/jenapp-logo.jpeg
+            byte[]? logoData = null;
+            try
+            {
+                var logoPath = Path.Combine(_env.ContentRootPath, "Images", "jenapp-logo.jpeg");
+                if (System.IO.File.Exists(logoPath))
+                    logoData = System.IO.File.ReadAllBytes(logoPath);
+            }
+            catch
+            {
+                // Si falla, simplemente no mostramos logo
+            }
+
             return Document.Create(document =>
             {
                 document.Page(page =>
@@ -178,72 +192,144 @@ namespace Webapi.Controllers
                     page.Margin(30);
                     page.Size(PageSizes.A4);
 
-                    page.Header()
-                        .Text($"Reporte de Ventas ({desde:yyyy-MM-dd} al {hasta:yyyy-MM-dd})")
-                        .FontSize(18)
-                        .Bold()
-                        .AlignCenter();
-
-                    page.Content().PaddingVertical(10).Column(col =>
+                    // HEADER
+                    page.Header().Column(col =>
                     {
-                        // Resumen
-                        col.Item().Text(text =>
+                        col.Item().Row(row =>
                         {
-                            text.Span("Total vendido: ").SemiBold();
-                            text.Span(total.ToString("C2"));
+                            if (logoData != null)
+                            {
+                                row.ConstantItem(70).Height(70).AlignLeft()
+                                   .Image(logoData);
+                            }
+
+                            row.RelativeItem()
+                               .AlignMiddle()   // 👈 AQUÍ corregido
+                               .Column(c =>
+                               {
+                                   c.Item().Text("Reporte de Ventas")
+                                       .FontSize(20)
+                                       .SemiBold()
+                                       .FontColor(Colors.Blue.Darken2);
+
+                                   c.Item().Text("Jenapp - Módulo de Reportes")
+                                       .FontSize(11)
+                                       .FontColor(Colors.Grey.Darken2);
+
+                                   c.Item().Text($"Desde {desde:dd/MM/yyyy} hasta {hasta:dd/MM/yyyy}")
+                                       .FontSize(10)
+                                       .FontColor(Colors.Grey.Darken3);
+                               });
                         });
 
-                        col.Item().Text(text =>
+                        col.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                    });
+
+                    // CONTENIDO
+                    page.Content().PaddingVertical(15).Column(col =>
+                    {
+                        // Cards de resumen
+                        col.Item().Row(row =>
                         {
-                            text.Span("Cantidad de ventas: ").SemiBold();
-                            text.Span(ventasDistintas.ToString());
+                            void Card(string titulo, string valor)
+                            {
+                                row.RelativeItem().PaddingRight(5).Border(1)
+                                    .BorderColor(Colors.Grey.Lighten2)
+                                    .Background(Colors.Grey.Lighten5)
+                                    .Padding(10)
+                                    .Column(c =>
+                                    {
+                                        c.Item().Text(titulo)
+                                            .FontSize(10)
+                                            .FontColor(Colors.Grey.Darken2);
+
+                                        c.Item().Text(valor)
+                                            .FontSize(14)
+                                            .SemiBold()
+                                            .FontColor(Colors.Blue.Darken3);
+                                    });
+                            }
+
+                            Card("Total vendido", total.ToString("C2"));
+                            Card("Cantidad de ventas", ventasDistintas.ToString());
+                            Card("Promedio por venta", promedio.ToString("C2"));
                         });
 
-                        col.Item().Text(text =>
-                        {
-                            text.Span("Promedio por venta: ").SemiBold();
-                            text.Span(promedio.ToString("C2"));
-                        });
+                        col.Item().PaddingTop(15);
 
-                        col.Item().PaddingTop(10);
+                        // Título tabla
+                        col.Item().Text("Detalle de ventas")
+                            .FontSize(12)
+                            .SemiBold()
+                            .FontColor(Colors.Grey.Darken3);
 
-                        // Tabla de detalles
+                        col.Item().PaddingBottom(5)
+                            .LineHorizontal(1)
+                            .LineColor(Colors.Grey.Lighten2);
+
+                        // Tabla
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
                             {
-                                columns.ConstantColumn(50);   // Id venta
-                                columns.RelativeColumn(80);   // Fecha
-                                columns.RelativeColumn(120);  // Cliente
-                                columns.RelativeColumn(120);  // Producto
-                                columns.ConstantColumn(40);   // Cantidad
-                                columns.ConstantColumn(60);   // Precio unit.
+                                columns.ConstantColumn(50);   // Venta
+                                columns.RelativeColumn(70);   // Fecha
+                                columns.RelativeColumn(110);  // Cliente
+                                columns.RelativeColumn(110);  // Producto
+                                columns.ConstantColumn(40);   // Cant.
+                                columns.ConstantColumn(60);   // P. Unit
                                 columns.ConstantColumn(70);   // Total
                             });
 
                             // Encabezados
                             table.Header(header =>
                             {
-                                header.Cell().Text("Venta").SemiBold();
-                                header.Cell().Text("Fecha").SemiBold();
-                                header.Cell().Text("Cliente").SemiBold();
-                                header.Cell().Text("Producto").SemiBold();
-                                header.Cell().Text("Cant.").SemiBold();
-                                header.Cell().Text("P. Unit").SemiBold();
-                                header.Cell().Text("Total").SemiBold();
+                                void HeaderCell(string text)
+                                {
+                                    header.Cell().Background(Colors.Blue.Medium)
+                                        .PaddingVertical(5)
+                                        .PaddingHorizontal(3)
+                                        .Text(text)
+                                        .FontSize(9)
+                                        .Bold()
+                                        .FontColor(Colors.White);
+                                }
+
+                                HeaderCell("Venta");
+                                HeaderCell("Fecha");
+                                HeaderCell("Cliente");
+                                HeaderCell("Producto");
+                                HeaderCell("Cant.");
+                                HeaderCell("P. Unit");
+                                HeaderCell("Total");
                             });
 
+                            // Filas
                             foreach (var f in filas)
                             {
-                                table.Cell().Text(f.SaleId.ToString());
-                                table.Cell().Text(f.Fecha.ToString("yyyy-MM-dd"));
-                                table.Cell().Text(f.Cliente);
-                                table.Cell().Text(f.Producto);
-                                table.Cell().Text(f.Quantity.ToString());
-                                table.Cell().Text(f.UnitPrice.ToString("C2"));
-                                table.Cell().Text(f.TotalPrice.ToString("C2"));
+                                table.Cell().Padding(3).Text(f.SaleId.ToString()).FontSize(9);
+                                table.Cell().Padding(3).Text(f.Fecha.ToString("dd/MM/yyyy")).FontSize(9);
+                                table.Cell().Padding(3).Text(f.Cliente).FontSize(9);
+                                table.Cell().Padding(3).Text(f.Producto).FontSize(9);
+                                table.Cell().Padding(3).AlignRight().Text(f.Quantity.ToString()).FontSize(9);
+                                table.Cell().Padding(3).AlignRight().Text(f.UnitPrice.ToString("C2")).FontSize(9);
+                                table.Cell().Padding(3).AlignRight().Text(f.TotalPrice.ToString("C2")).FontSize(9);
                             }
                         });
+                    });
+
+                    // FOOTER
+                    page.Footer().AlignCenter().Text(text =>
+                    {
+                        text.Span("Jose Zabaleta y Esteban Rinaldy @ Jenapp")
+                            .FontSize(9)
+                            .FontColor(Colors.Grey.Medium);
+
+                        text.Span("  |  ").FontSize(9).FontColor(Colors.Grey.Lighten1);
+
+                        text.Span($"Generado el {DateTime.Now:dd/MM/yyyy HH:mm}")
+                            .FontSize(8)
+                            .FontColor(Colors.Grey.Lighten1);
                     });
                 });
             }).GeneratePdf();
