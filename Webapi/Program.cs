@@ -6,8 +6,12 @@ using Webapi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using QuestPDF.Infrastructure;  
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 👈 ACTIVAR LICENCIA QUESTPDF 
+QuestPDF.Settings.License = LicenseType.Community;
 
 // Conexión a la base de datos
 var cadenaconexion = builder.Configuration.GetConnectionString("CadenaConexionDB");
