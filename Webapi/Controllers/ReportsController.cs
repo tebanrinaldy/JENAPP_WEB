@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
 using Webapi.Data;
+using Webapi.Models; // 👈 asegúrate que aquí está tu entidad Sale
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+
 namespace Webapi.Controllers
 {
     [ApiController]
@@ -25,7 +27,9 @@ namespace Webapi.Controllers
             _env = env;
         }
 
-       
+        // =========================
+        // 1) ENDPOINT: DETALLE POR DÍA
+        // =========================
         [HttpGet("daily-details")]
         public Task<IActionResult> GetDailyDetails([FromQuery] DateTime date)
         {
@@ -33,7 +37,9 @@ namespace Webapi.Controllers
             return GetDetails(date, date);
         }
 
-    
+        // =========================
+        // 2) ENDPOINT: DETALLES POR RANGO (JSON)
+        // =========================
         [HttpGet("details")]
         public async Task<IActionResult> GetDetails(
             [FromQuery] DateTime from,
@@ -91,7 +97,9 @@ namespace Webapi.Controllers
             return Ok(resultado);
         }
 
-        // 🔹 Endpoint para EXPORTAR PDF con el MISMO rango
+        // =========================
+        // 3) ENDPOINT: DETALLES POR RANGO (PDF)
+        // =========================
         // GET: api/reports/details/pdf?from=2025-11-14
         // GET: api/reports/details/pdf?from=2025-11-14&to=2025-11-16
         [HttpGet("details/pdf")]
@@ -149,7 +157,32 @@ namespace Webapi.Controllers
             return File(pdfBytes, "application/pdf", fileName);
         }
 
-        // 🔹 Clase interna para representar una fila del reporte
+        // =========================
+        // 4) ENDPOINT: TICKET DE UNA VENTA (PDF TIPO POS)
+        // =========================
+        // GET: api/reports/ticket/5
+        [HttpGet("ticket/{saleId}")]
+        public async Task<IActionResult> GetSaleTicket(int saleId)
+        {
+            // Traer la venta con sus detalles y producto
+            var sale = await _context.Sales
+                .Include(s => s.Details)
+                    .ThenInclude(d => d.Product)
+                .FirstOrDefaultAsync(s => s.Id == saleId);
+
+            if (sale == null)
+                return NotFound(new { message = "Venta no encontrada" });
+
+            // Generar el PDF tipo ticket
+            var pdfBytes = GenerarTicketPdf(sale);
+
+            var fileName = $"ticket-venta-{saleId}.pdf";
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+
+        // =========================
+        // 5) CLASE INTERNA PARA EL REPORTE GENERAL
+        // =========================
         private class ReportRow
         {
             public int SaleId { get; set; }
@@ -162,7 +195,9 @@ namespace Webapi.Controllers
             public decimal TotalPrice { get; set; }
         }
 
-        // 🔹 Generación del PDF con QuestPDF (logo + header + footer)
+        // =========================
+        // 6) GENERACIÓN PDF REPORTE GENERAL
+        // =========================
         private byte[] GenerarReporteDetallesPdf(
             DateTime desde,
             DateTime hasta,
@@ -204,7 +239,7 @@ namespace Webapi.Controllers
                             }
 
                             row.RelativeItem()
-                               .AlignMiddle()   // 👈 AQUÍ corregido
+                               .AlignMiddle()
                                .Column(c =>
                                {
                                    c.Item().Text("Reporte de Ventas")
@@ -330,6 +365,132 @@ namespace Webapi.Controllers
                         text.Span($"Generado el {DateTime.Now:dd/MM/yyyy HH:mm}")
                             .FontSize(8)
                             .FontColor(Colors.Grey.Lighten1);
+                    });
+                });
+            }).GeneratePdf();
+        }
+
+        // =========================
+        // 7) GENERACIÓN PDF TIPO TICKET POS
+        // =========================
+        private byte[] GenerarTicketPdf(Sale sale)
+        {
+            // Intentar cargar el mismo logo (opcional)
+            byte[]? logoData = null;
+            try
+            {
+                var logoPath = Path.Combine(_env.ContentRootPath, "Images", "jenapp-logo.jpeg");
+                if (System.IO.File.Exists(logoPath))
+                    logoData = System.IO.File.ReadAllBytes(logoPath);
+            }
+            catch
+            {
+                // si falla, sin logo
+            }
+
+            return Document.Create(document =>
+            {
+                document.Page(page =>
+                {
+                    // Tamaño tipo ticket (puedes ajustar)
+                    page.Size(PageSizes.A6);
+                    page.Margin(20);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(t => t.FontSize(9));
+
+                    page.Content().Column(col =>
+                    {
+                        // HEADER
+                        col.Item().AlignCenter().Column(c =>
+                        {
+                            if (logoData != null)
+                            {
+                                c.Item().Height(40).Width(40).AlignCenter().Image(logoData);
+                            }
+
+                            c.Item().Text("Jenapp")
+                                .FontSize(14)
+                                .SemiBold();
+
+                            c.Item().Text("Factura de venta")
+                                .FontSize(10);
+                        });
+
+                        col.Item().PaddingVertical(5).LineHorizontal(0.5f);
+
+                        // INFO VENTA
+                        col.Item().Text(txt =>
+                        {
+                            txt.Span("Venta N°: ").SemiBold();
+                            txt.Span(sale.Id.ToString());
+                        });
+
+                        col.Item().Text(txt =>
+                        {
+                            txt.Span("Fecha: ").SemiBold();
+                            txt.Span(sale.Date.ToString("dd/MM/yyyy HH:mm"));
+                        });
+
+                        col.Item().Text(txt =>
+                        {
+                            txt.Span("Cliente: ").SemiBold();
+                            txt.Span(sale.Client ?? "Sin nombre");
+                        });
+
+                        col.Item().PaddingVertical(5).LineHorizontal(0.5f);
+
+                        // DETALLES
+                        col.Item().Text("Detalles").SemiBold().FontSize(10);
+
+                        col.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn(2); // Producto
+                                columns.RelativeColumn(1); // Cant
+                                columns.RelativeColumn(1); // P. U.
+                                columns.RelativeColumn(1); // Subtotal
+                            });
+
+                            // Encabezados
+                            table.Header(header =>
+                            {
+                                header.Cell().Element(HeaderCell).Text("Prod");
+                                header.Cell().Element(HeaderCell).AlignRight().Text("Cant");
+                                header.Cell().Element(HeaderCell).AlignRight().Text("P.U.");
+                                header.Cell().Element(HeaderCell).AlignRight().Text("Sub");
+
+                                static IContainer HeaderCell(IContainer container) =>
+                                    container.DefaultTextStyle(x => x.SemiBold())
+                                             .PaddingBottom(2);
+                            });
+
+                            // Filas
+                            foreach (var d in sale.Details)
+                            {
+                                var nombre = d.Product?.Name ?? "Producto";
+                                var cant = d.Quantity;
+                                var unit = d.UnitPrice;
+                                var sub = d.TotalPrice;
+
+                                table.Cell().Text(nombre).FontSize(9);
+                                table.Cell().AlignRight().Text(cant.ToString()).FontSize(9);
+                                table.Cell().AlignRight().Text(unit.ToString("N0")).FontSize(9);
+                                table.Cell().AlignRight().Text(sub.ToString("N0")).FontSize(9);
+                            }
+                        });
+
+                        col.Item().PaddingVertical(5).LineHorizontal(0.5f);
+
+                        // TOTAL
+                        col.Item().AlignRight().Text(txt =>
+                        {
+                            txt.Span("TOTAL: ").SemiBold();
+                            txt.Span(sale.Total.ToString("N0")).SemiBold();
+                        });
+
+                        col.Item().PaddingTop(10).AlignCenter().Text("¡Gracias por su compra!")
+                            .FontSize(9);
                     });
                 });
             }).GeneratePdf();
