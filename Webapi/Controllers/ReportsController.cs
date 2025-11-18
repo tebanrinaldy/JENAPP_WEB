@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
 using Webapi.Data;
-using Webapi.Models; // 👈 asegúrate que aquí está tu entidad Sale
+using Webapi.Models; 
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -19,7 +19,7 @@ namespace Webapi.Controllers
     public class ReportsController : ControllerBase
     {
         private readonly Connectioncontextdb _context;
-        private readonly IWebHostEnvironment _env;   // para ruta del logo
+        private readonly IWebHostEnvironment _env;  
 
         public ReportsController(Connectioncontextdb context, IWebHostEnvironment env)
         {
@@ -27,28 +27,20 @@ namespace Webapi.Controllers
             _env = env;
         }
 
-        // =========================
-        // 1) ENDPOINT: DETALLE POR DÍA
-        // =========================
         [HttpGet("daily-details")]
         public Task<IActionResult> GetDailyDetails([FromQuery] DateTime date)
         {
-            // Reutilizamos el endpoint general usando el mismo día como from y to
             return GetDetails(date, date);
         }
 
-        // =========================
-        // 2) ENDPOINT: DETALLES POR RANGO (JSON)
-        // =========================
         [HttpGet("details")]
         public async Task<IActionResult> GetDetails(
             [FromQuery] DateTime from,
             [FromQuery] DateTime? to = null)
         {
             var fromDate = from.Date;
-            var toDate = (to ?? from).Date.AddDays(1); // rango [from, to] inclusive
+            var toDate = (to ?? from).Date.AddDays(1); 
 
-            // 1. Traemos los detalles de venta dentro del rango
             var detalles = await _context.SaleDetails
                 .Include(d => d.Sale)
                 .Include(d => d.Product)
@@ -57,7 +49,6 @@ namespace Webapi.Controllers
                             d.Sale.Date < toDate)
                 .ToListAsync();
 
-            // 2. Proyección para la tabla (grid)
             var filas = detalles
                 .Select(d => new
                 {
@@ -74,7 +65,6 @@ namespace Webapi.Controllers
                 .ThenBy(f => f.saleId)
                 .ToList();
 
-            // 3. Resumen
             var total = filas.Sum(f => f.totalPrice);
             var ventasDistintas = filas
                 .Select(f => f.saleId)
@@ -83,11 +73,10 @@ namespace Webapi.Controllers
 
             var promedio = ventasDistintas == 0 ? 0 : total / ventasDistintas;
 
-            // 4. Resultado final (resumen + filas)
             var resultado = new
             {
                 dateFrom = fromDate,
-                dateTo = toDate.AddDays(-1).Date, // día final real
+                dateTo = toDate.AddDays(-1).Date, 
                 totalAmount = total,
                 salesCount = ventasDistintas,
                 averageAmount = promedio,
@@ -97,18 +86,13 @@ namespace Webapi.Controllers
             return Ok(resultado);
         }
 
-        // =========================
-        // 3) ENDPOINT: DETALLES POR RANGO (PDF)
-        // =========================
-        // GET: api/reports/details/pdf?from=2025-11-14
-        // GET: api/reports/details/pdf?from=2025-11-14&to=2025-11-16
         [HttpGet("details/pdf")]
         public async Task<IActionResult> GetDetailsPdf(
             [FromQuery] DateTime from,
             [FromQuery] DateTime? to = null)
         {
             var fromDate = from.Date;
-            var toDate = (to ?? from).Date.AddDays(1); // [from, to] inclusive
+            var toDate = (to ?? from).Date.AddDays(1); 
 
             var detalles = await _context.SaleDetails
                 .Include(d => d.Sale)
@@ -157,14 +141,11 @@ namespace Webapi.Controllers
             return File(pdfBytes, "application/pdf", fileName);
         }
 
-        // =========================
-        // 4) ENDPOINT: TICKET DE UNA VENTA (PDF TIPO POS)
-        // =========================
+
         // GET: api/reports/ticket/5
         [HttpGet("ticket/{saleId}")]
         public async Task<IActionResult> GetSaleTicket(int saleId)
         {
-            // Traer la venta con sus detalles y producto
             var sale = await _context.Sales
                 .Include(s => s.Details)
                     .ThenInclude(d => d.Product)
@@ -173,16 +154,13 @@ namespace Webapi.Controllers
             if (sale == null)
                 return NotFound(new { message = "Venta no encontrada" });
 
-            // Generar el PDF tipo ticket
             var pdfBytes = GenerarTicketPdf(sale);
 
             var fileName = $"ticket-venta-{saleId}.pdf";
             return File(pdfBytes, "application/pdf", fileName);
         }
 
-        // =========================
-        // 5) CLASE INTERNA PARA EL REPORTE GENERAL
-        // =========================
+
         private class ReportRow
         {
             public int SaleId { get; set; }
@@ -195,9 +173,7 @@ namespace Webapi.Controllers
             public decimal TotalPrice { get; set; }
         }
 
-        // =========================
-        // 6) GENERACIÓN PDF REPORTE GENERAL
-        // =========================
+
         private byte[] GenerarReporteDetallesPdf(
             DateTime desde,
             DateTime hasta,
@@ -207,7 +183,6 @@ namespace Webapi.Controllers
             List<ReportRow> filas
         )
         {
-            // Cargar logo desde carpeta Images/jenapp-logo.jpeg
             byte[]? logoData = null;
             try
             {
@@ -217,7 +192,6 @@ namespace Webapi.Controllers
             }
             catch
             {
-                // Si falla, simplemente no mostramos logo
             }
 
             return Document.Create(document =>
@@ -227,7 +201,6 @@ namespace Webapi.Controllers
                     page.Margin(30);
                     page.Size(PageSizes.A4);
 
-                    // HEADER
                     page.Header().Column(col =>
                     {
                         col.Item().Row(row =>
@@ -260,10 +233,8 @@ namespace Webapi.Controllers
                         col.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
                     });
 
-                    // CONTENIDO
                     page.Content().PaddingVertical(15).Column(col =>
                     {
-                        // Cards de resumen
                         col.Item().Row(row =>
                         {
                             void Card(string titulo, string valor)
@@ -292,7 +263,6 @@ namespace Webapi.Controllers
 
                         col.Item().PaddingTop(15);
 
-                        // Título tabla
                         col.Item().Text("Detalle de ventas")
                             .FontSize(12)
                             .SemiBold()
@@ -302,21 +272,19 @@ namespace Webapi.Controllers
                             .LineHorizontal(1)
                             .LineColor(Colors.Grey.Lighten2);
 
-                        // Tabla
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
                             {
-                                columns.ConstantColumn(50);   // Venta
-                                columns.RelativeColumn(70);   // Fecha
-                                columns.RelativeColumn(110);  // Cliente
-                                columns.RelativeColumn(110);  // Producto
-                                columns.ConstantColumn(40);   // Cant.
-                                columns.ConstantColumn(60);   // P. Unit
-                                columns.ConstantColumn(70);   // Total
+                                columns.ConstantColumn(50);   
+                                columns.RelativeColumn(70);   
+                                columns.RelativeColumn(110);  
+                                columns.RelativeColumn(110);  
+                                columns.ConstantColumn(40);   
+                                columns.ConstantColumn(60);   
+                                columns.ConstantColumn(70);   
                             });
 
-                            // Encabezados
                             table.Header(header =>
                             {
                                 void HeaderCell(string text)
@@ -339,7 +307,6 @@ namespace Webapi.Controllers
                                 HeaderCell("Total");
                             });
 
-                            // Filas
                             foreach (var f in filas)
                             {
                                 table.Cell().Padding(3).Text(f.SaleId.ToString()).FontSize(9);
@@ -353,7 +320,6 @@ namespace Webapi.Controllers
                         });
                     });
 
-                    // FOOTER
                     page.Footer().AlignCenter().Text(text =>
                     {
                         text.Span("Jose Zabaleta y Esteban Rinaldy @ Jenapp")
@@ -370,12 +336,9 @@ namespace Webapi.Controllers
             }).GeneratePdf();
         }
 
-        // =========================
-        // 7) GENERACIÓN PDF TIPO TICKET POS
-        // =========================
+
         private byte[] GenerarTicketPdf(Sale sale)
         {
-            // Intentar cargar el mismo logo (opcional)
             byte[]? logoData = null;
             try
             {
@@ -385,14 +348,12 @@ namespace Webapi.Controllers
             }
             catch
             {
-                // si falla, sin logo
             }
 
             return Document.Create(document =>
             {
                 document.Page(page =>
                 {
-                    // Tamaño tipo ticket (puedes ajustar)
                     page.Size(PageSizes.A6);
                     page.Margin(20);
                     page.PageColor(Colors.White);
@@ -400,7 +361,6 @@ namespace Webapi.Controllers
 
                     page.Content().Column(col =>
                     {
-                        // HEADER
                         col.Item().AlignCenter().Column(c =>
                         {
                             if (logoData != null)
@@ -418,7 +378,6 @@ namespace Webapi.Controllers
 
                         col.Item().PaddingVertical(5).LineHorizontal(0.5f);
 
-                        // INFO VENTA
                         col.Item().Text(txt =>
                         {
                             txt.Span("Venta N°: ").SemiBold();
@@ -439,20 +398,18 @@ namespace Webapi.Controllers
 
                         col.Item().PaddingVertical(5).LineHorizontal(0.5f);
 
-                        // DETALLES
                         col.Item().Text("Detalles").SemiBold().FontSize(10);
 
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
                             {
-                                columns.RelativeColumn(2); // Producto
-                                columns.RelativeColumn(1); // Cant
-                                columns.RelativeColumn(1); // P. U.
-                                columns.RelativeColumn(1); // Subtotal
+                                columns.RelativeColumn(2); 
+                                columns.RelativeColumn(1); 
+                                columns.RelativeColumn(1); 
+                                columns.RelativeColumn(1); 
                             });
 
-                            // Encabezados
                             table.Header(header =>
                             {
                                 header.Cell().Element(HeaderCell).Text("Prod");
@@ -465,7 +422,6 @@ namespace Webapi.Controllers
                                              .PaddingBottom(2);
                             });
 
-                            // Filas
                             foreach (var d in sale.Details)
                             {
                                 var nombre = d.Product?.Name ?? "Producto";
@@ -482,7 +438,6 @@ namespace Webapi.Controllers
 
                         col.Item().PaddingVertical(5).LineHorizontal(0.5f);
 
-                        // TOTAL
                         col.Item().AlignRight().Text(txt =>
                         {
                             txt.Span("TOTAL: ").SemiBold();

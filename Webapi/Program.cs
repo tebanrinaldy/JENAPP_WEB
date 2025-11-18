@@ -10,15 +10,12 @@ using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 👈 ACTIVAR LICENCIA QUESTPDF 
 QuestPDF.Settings.License = LicenseType.Community;
 
-// Conexión a la base de datos
 var cadenaconexion = builder.Configuration.GetConnectionString("CadenaConexionDB");
 builder.Services.AddDbContext<Connectioncontextdb>(options =>
     options.UseSqlServer(cadenaconexion));
 
-// Configuración CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirTodo", policy =>
@@ -29,12 +26,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Servicios básicos
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.WebHost.UseUrls("http://localhost:5132", "http://192.168.137.96:5132");
+builder.WebHost.UseUrls("http://localhost:5132", "http://192.168.1.23:5132");
 builder.Services.AddScoped<JwtTokensGenerator>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<Userservice>();
@@ -42,7 +38,6 @@ builder.Services.AddScoped<Saleservice>();
 builder.Services.AddScoped<Productservice>();
 builder.Services.AddScoped<Inventoryservice>();
 
-// Configuración JWT
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
     {
@@ -59,13 +54,11 @@ builder.Services.AddAuthentication("Bearer")
 
 var app = builder.Build();
 
-// Pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 
-    // Abrir Swagger automáticamente
     var swaggerUrl = "http://localhost:5132/swagger";
     try
     {
