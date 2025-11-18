@@ -11,10 +11,12 @@ using Webapi.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Webapi.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class ReportsController : ControllerBase
     {
