@@ -17,6 +17,7 @@ namespace Webapi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly Userservice _userservice;
@@ -29,9 +30,7 @@ namespace Webapi.Controllers
         }
 
         // GET: api/Users
-        [Authorize]
         [HttpGet]
-       
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
             var users = await _userservice.GetAllUsersAsync();
@@ -70,6 +69,7 @@ namespace Webapi.Controllers
 
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [AllowAnonymous]
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
@@ -91,6 +91,7 @@ namespace Webapi.Controllers
             return NoContent();
         }
         // 🟣 POST: api/users/Login 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto login)
         {

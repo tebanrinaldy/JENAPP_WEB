@@ -34,10 +34,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Forzar URL por defecto
-builder.WebHost.UseUrls("http://localhost:5132");
-
-// Inyección de dependencias
+builder.WebHost.UseUrls("http://localhost:5132", "http://192.168.137.96:5132");
 builder.Services.AddScoped<JwtTokensGenerator>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<Userservice>();
