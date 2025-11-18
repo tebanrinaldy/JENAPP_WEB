@@ -30,7 +30,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.WebHost.UseUrls("http://localhost:5132", "http://192.168.1.23:5132");
+builder.WebHost.UseUrls("http://localhost:5132");
 builder.Services.AddScoped<JwtTokensGenerator>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<Userservice>();
