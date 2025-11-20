@@ -39,6 +39,7 @@ builder.Services.AddScoped<Userservice>();
 builder.Services.AddScoped<Saleservice>();
 builder.Services.AddScoped<Productservice>();
 builder.Services.AddScoped<Inventoryservice>();
+builder.Services.AddScoped<Reportsservice>();
 
 
 builder.Services.AddHttpClient("ollama", c =>
