@@ -40,8 +40,13 @@ builder.Services.AddScoped<Saleservice>();
 builder.Services.AddScoped<Productservice>();
 builder.Services.AddScoped<Inventoryservice>();
 
-// Chatbot JenApp
-builder.Services.AddSingleton<ChatbotService>();
+
+builder.Services.AddHttpClient("ollama", c =>
+{
+    c.BaseAddress = new Uri("http://localhost:11434"); 
+});
+
+builder.Services.AddScoped<ChatbotService>();
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
