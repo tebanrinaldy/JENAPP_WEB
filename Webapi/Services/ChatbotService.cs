@@ -58,6 +58,7 @@ Reglas:
 - No expliques nada.
 - No añadas texto extra.
 - No inventes datos.
+- No digas ni inventes nada que no este en el programa
 - Si la pregunta menciona dos fechas: VENTAS_RANGO.
 - Si pregunta por ventas del día o de hoy: VENTAS_HOY.
 - Si pregunta por semana o últimos 7 días: TOP_PRODUCTOS_SEMANA.
