@@ -28,7 +28,7 @@ namespace Webapi.Controllers
         }
 
         // POST: api/PendingSales
-        // Pedido público (sin login)
+        
         [HttpPost]
         [AllowAnonymous]
         public async Task<ActionResult> CreatePendingSale([FromBody] PendingSale pendingSale)
@@ -36,7 +36,7 @@ namespace Webapi.Controllers
             if (pendingSale == null || pendingSale.Details == null || !pendingSale.Details.Any())
                 return BadRequest("La venta debe tener al menos un detalle.");
 
-            // Aseguramos totales de cada detalle
+         
             foreach (var d in pendingSale.Details)
             {
                 d.PendingSale = null;
@@ -44,7 +44,7 @@ namespace Webapi.Controllers
                 d.TotalPrice = d.Quantity * d.UnitPrice;
             }
 
-            // Totales generales y estado inicial
+            
             pendingSale.Total = pendingSale.Details.Sum(d => d.TotalPrice);
             pendingSale.Status = "Pendiente";
             pendingSale.Date = DateTime.Now;
@@ -56,7 +56,7 @@ namespace Webapi.Controllers
             _context.PendingSales.Add(pendingSale);
             await _context.SaveChangesAsync();
 
-            // Notificación en tiempo real al panel admin
+           
             await _hub.Clients.All.SendAsync("PendingSaleCreated", new
             {
                 pendingSale.Id,
@@ -68,7 +68,7 @@ namespace Webapi.Controllers
                 pendingSale.TrackingCode
             });
 
-            // Devolvemos info básica al front público
+    
             return Ok(new
             {
                 pendingSale.Id,
@@ -82,7 +82,7 @@ namespace Webapi.Controllers
         }
 
         // GET: api/PendingSales/search?code=XXX&phone=YYY
-        // Buscar por código o teléfono (público)
+      
         [HttpGet("search")]
         [AllowAnonymous]
         public async Task<IActionResult> SearchPendingSale(
@@ -121,8 +121,8 @@ namespace Webapi.Controllers
             });
         }
 
-        // GET: api/PendingSales
-        // Listado interno para admin (solo pendientes)
+        // GET:
+
         [HttpGet]
         [Authorize]
         public async Task<ActionResult<IEnumerable<PendingSale>>> GetPendingSales()
@@ -137,7 +137,7 @@ namespace Webapi.Controllers
             return Ok(sales);
         }
 
-        // GET: api/PendingSales/5
+        // GET: 
         [HttpGet("{id}")]
         [Authorize]
         public async Task<ActionResult<PendingSale>> GetPendingSaleById(int id)
@@ -153,8 +153,8 @@ namespace Webapi.Controllers
             return Ok(sale);
         }
 
-        // GET: api/PendingSales/track/ABCD1234
-        // Seguimiento por código (público)
+        // GET: 
+        
         [HttpGet("track/{code}")]
         [AllowAnonymous]
         public async Task<ActionResult> TrackByCode(string code)
@@ -179,8 +179,8 @@ namespace Webapi.Controllers
             return Ok(sale);
         }
 
-        // PUT: api/PendingSales/confirm/5
-        // Confirma pedido y lo pasa a Sale
+        // PUT: 
+       
         [HttpPut("confirm/{id}")]
         [Authorize]
         public async Task<IActionResult> ConfirmPendingSale(int id)
@@ -224,8 +224,7 @@ namespace Webapi.Controllers
             return Ok(createdSale);
         }
 
-        // PUT: api/PendingSales/reject/5
-        // Rechaza el pedido (no genera Sale)
+        // PUT: 
         [HttpPut("reject/{id}")]
         [Authorize]
         public async Task<IActionResult> RejectPendingSale(int id)
