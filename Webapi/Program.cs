@@ -1,12 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using QuestPDF.Infrastructure;
+using System.Text;
 using Webapi;
 using Webapi.Data;
+using Webapi.Hubs;
 using Webapi.Repositories;
 using Webapi.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,13 +17,15 @@ var cadenaconexion = builder.Configuration.GetConnectionString("CadenaConexionDB
 builder.Services.AddDbContext<Connectioncontextdb>(options =>
     options.UseSqlServer(cadenaconexion));
 
+var permitirtodo = "_permitirtodo";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirTodo", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:5173")
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -63,6 +66,7 @@ builder.Services.AddAuthentication("Bearer")
         };
     });
 
+builder.Services.AddSignalR();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -88,5 +92,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationsHub>("/hub/notifications");
+
 
 app.Run();

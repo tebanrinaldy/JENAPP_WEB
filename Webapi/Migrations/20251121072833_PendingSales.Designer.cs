@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Webapi.Data;
 
@@ -11,9 +12,11 @@ using Webapi.Data;
 namespace Webapi.Migrations
 {
     [DbContext(typeof(Connectioncontextdb))]
-    partial class ConnectioncontextdbModelSnapshot : ModelSnapshot
+    [Migration("20251121072833_PendingSales")]
+    partial class PendingSales
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -106,7 +109,7 @@ namespace Webapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("PendingSaleId")
+                    b.Property<int>("PendingSaleId")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductId")
@@ -252,7 +255,9 @@ namespace Webapi.Migrations
                 {
                     b.HasOne("Webapi.Models.PendingSale", "PendingSale")
                         .WithMany("Details")
-                        .HasForeignKey("PendingSaleId");
+                        .HasForeignKey("PendingSaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Webapi.Models.Product", "Product")
                         .WithMany()

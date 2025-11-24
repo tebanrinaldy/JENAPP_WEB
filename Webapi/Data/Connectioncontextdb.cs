@@ -14,6 +14,8 @@ namespace Webapi.Data
         public DbSet<Sale> Sales { get; set; }
         public DbSet<SaleDetail> SaleDetails { get; set; }
         public DbSet<Webapi.Models.InventoryMovement> InventoryMovement { get; set; } = default!;
+        public DbSet<PendingSale> PendingSales { get; set; }
+        public DbSet<PendingSaleDetail> PendingSaleDetails { get; set; }
     }
 
 }
