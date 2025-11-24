@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Webapi.Data;
 using Webapi.Hubs;
 using Webapi.Models;
 using Webapi.Services;
-using Microsoft.EntityFrameworkCore;
 
 namespace Webapi.Controllers
 {
@@ -28,12 +27,16 @@ namespace Webapi.Controllers
             _hub = hub;
         }
 
+        // POST: api/PendingSales
+        // Pedido público (sin login)
         [HttpPost]
-        public async Task<ActionResult<PendingSale>> CreatePendingSale([FromBody] PendingSale pendingSale)
+        [AllowAnonymous]
+        public async Task<ActionResult> CreatePendingSale([FromBody] PendingSale pendingSale)
         {
             if (pendingSale == null || pendingSale.Details == null || !pendingSale.Details.Any())
                 return BadRequest("La venta debe tener al menos un detalle.");
 
+            // Aseguramos totales de cada detalle
             foreach (var d in pendingSale.Details)
             {
                 d.PendingSale = null;
@@ -41,26 +44,85 @@ namespace Webapi.Controllers
                 d.TotalPrice = d.Quantity * d.UnitPrice;
             }
 
+            // Totales generales y estado inicial
             pendingSale.Total = pendingSale.Details.Sum(d => d.TotalPrice);
             pendingSale.Status = "Pendiente";
             pendingSale.Date = DateTime.Now;
 
+            // Código de seguimiento si no viene
+            if (string.IsNullOrWhiteSpace(pendingSale.TrackingCode))
+                pendingSale.TrackingCode = Guid.NewGuid().ToString("N")[..8];
+
             _context.PendingSales.Add(pendingSale);
             await _context.SaveChangesAsync();
+
+            // Notificación en tiempo real al panel admin
             await _hub.Clients.All.SendAsync("PendingSaleCreated", new
             {
                 pendingSale.Id,
                 pendingSale.Client,
+                pendingSale.Phone,
                 pendingSale.Total,
                 pendingSale.Date,
-                pendingSale.Status
+                pendingSale.Status,
+                pendingSale.TrackingCode
             });
 
-
-
-            return CreatedAtAction(nameof(GetPendingSaleById), new { id = pendingSale.Id }, pendingSale);
+            // Devolvemos info básica al front público
+            return Ok(new
+            {
+                pendingSale.Id,
+                pendingSale.Client,
+                pendingSale.Phone,
+                pendingSale.Total,
+                pendingSale.Date,
+                pendingSale.Status,
+                pendingSale.TrackingCode
+            });
         }
 
+        // GET: api/PendingSales/search?code=XXX&phone=YYY
+        // Buscar por código o teléfono (público)
+        [HttpGet("search")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SearchPendingSale(
+            [FromQuery] string? code,
+            [FromQuery] string? phone)
+        {
+            if (string.IsNullOrWhiteSpace(code) && string.IsNullOrWhiteSpace(phone))
+                return BadRequest("Debe enviar un código o teléfono.");
+
+            PendingSale? sale = null;
+
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                sale = await _context.PendingSales
+                    .FirstOrDefaultAsync(p => p.TrackingCode == code);
+            }
+            else if (!string.IsNullOrWhiteSpace(phone))
+            {
+                sale = await _context.PendingSales
+                    .Where(p => p.Phone == phone)
+                    .OrderByDescending(p => p.Date)
+                    .FirstOrDefaultAsync();
+            }
+
+            if (sale == null)
+                return NotFound("No se encontró el pedido.");
+
+            return Ok(new
+            {
+                sale.TrackingCode,
+                sale.Client,
+                sale.Phone,
+                sale.Status,
+                sale.Date,
+                sale.Total
+            });
+        }
+
+        // GET: api/PendingSales
+        // Listado interno para admin (solo pendientes)
         [HttpGet]
         [Authorize]
         public async Task<ActionResult<IEnumerable<PendingSale>>> GetPendingSales()
@@ -75,6 +137,7 @@ namespace Webapi.Controllers
             return Ok(sales);
         }
 
+        // GET: api/PendingSales/5
         [HttpGet("{id}")]
         [Authorize]
         public async Task<ActionResult<PendingSale>> GetPendingSaleById(int id)
@@ -90,6 +153,34 @@ namespace Webapi.Controllers
             return Ok(sale);
         }
 
+        // GET: api/PendingSales/track/ABCD1234
+        // Seguimiento por código (público)
+        [HttpGet("track/{code}")]
+        [AllowAnonymous]
+        public async Task<ActionResult> TrackByCode(string code)
+        {
+            var sale = await _context.PendingSales
+                .AsNoTracking()
+                .Where(p => p.TrackingCode == code)
+                .Select(p => new
+                {
+                    p.TrackingCode,
+                    p.Client,
+                    p.Phone,
+                    p.Status,
+                    p.Date,
+                    p.Total
+                })
+                .FirstOrDefaultAsync();
+
+            if (sale == null)
+                return NotFound(new { message = "Pedido no encontrado" });
+
+            return Ok(sale);
+        }
+
+        // PUT: api/PendingSales/confirm/5
+        // Confirma pedido y lo pasa a Sale
         [HttpPut("confirm/{id}")]
         [Authorize]
         public async Task<IActionResult> ConfirmPendingSale(int id)
@@ -122,16 +213,19 @@ namespace Webapi.Controllers
 
             pending.Status = "Confirmada";
             await _context.SaveChangesAsync();
+
             await _hub.Clients.All.SendAsync("PendingSaleUpdated", new
             {
                 pending.Id,
-                pending.Status
+                pending.Status,
+                pending.TrackingCode
             });
-
 
             return Ok(createdSale);
         }
 
+        // PUT: api/PendingSales/reject/5
+        // Rechaza el pedido (no genera Sale)
         [HttpPut("reject/{id}")]
         [Authorize]
         public async Task<IActionResult> RejectPendingSale(int id)
@@ -146,12 +240,14 @@ namespace Webapi.Controllers
 
             pending.Status = "Rechazada";
             await _context.SaveChangesAsync();
+
             await _hub.Clients.All.SendAsync("PendingSaleUpdated", new
             {
                 pending.Id,
-                pending.Status
+                pending.Status,
+                pending.TrackingCode
             });
-    
+
             return Ok(pending);
         }
     }

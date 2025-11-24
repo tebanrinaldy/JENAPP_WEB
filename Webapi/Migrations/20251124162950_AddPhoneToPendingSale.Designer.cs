@@ -12,8 +12,8 @@ using Webapi.Data;
 namespace Webapi.Migrations
 {
     [DbContext(typeof(Connectioncontextdb))]
-    [Migration("20251113123438_InitialCreation")]
-    partial class InitialCreation
+    [Migration("20251124162950_AddPhoneToPendingSale")]
+    partial class AddPhoneToPendingSale
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -74,6 +74,77 @@ namespace Webapi.Migrations
                     b.ToTable("InventoryMovement");
                 });
 
+            modelBuilder.Entity("Webapi.Models.PendingSale", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Client")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StatusProduct")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TrackingCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PendingSales");
+                });
+
+            modelBuilder.Entity("Webapi.Models.PendingSaleDetail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("PendingSaleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PendingSaleId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("PendingSaleDetails");
+                });
+
             modelBuilder.Entity("Webapi.Models.Product", b =>
                 {
                     b.Property<int>("Id")
@@ -84,6 +155,9 @@ namespace Webapi.Migrations
 
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -189,6 +263,25 @@ namespace Webapi.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Webapi.Models.PendingSaleDetail", b =>
+                {
+                    b.HasOne("Webapi.Models.PendingSale", "PendingSale")
+                        .WithMany("Details")
+                        .HasForeignKey("PendingSaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Webapi.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PendingSale");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Webapi.Models.Product", b =>
                 {
                     b.HasOne("Webapi.Models.Category", "Category")
@@ -217,6 +310,11 @@ namespace Webapi.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Sale");
+                });
+
+            modelBuilder.Entity("Webapi.Models.PendingSale", b =>
+                {
+                    b.Navigation("Details");
                 });
 
             modelBuilder.Entity("Webapi.Models.Sale", b =>

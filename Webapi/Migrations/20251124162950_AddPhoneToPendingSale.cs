@@ -5,24 +5,25 @@
 namespace Webapi.Migrations
 {
     /// <inheritdoc />
-    public partial class AddImageUrlToProduct : Migration
+    public partial class AddPhoneToPendingSale : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "ImageUrl",
-                table: "Products",
+                name: "Phone",
+                table: "PendingSales",
                 type: "nvarchar(max)",
-                nullable: true);
+                nullable: false,
+                defaultValue: "");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "ImageUrl",
-                table: "Products");
+                name: "Phone",
+                table: "PendingSales");
         }
     }
 }

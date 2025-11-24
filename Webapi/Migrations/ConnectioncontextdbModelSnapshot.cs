@@ -86,12 +86,24 @@ namespace Webapi.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StatusProduct")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TrackingCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -106,7 +118,7 @@ namespace Webapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("PendingSaleId")
+                    b.Property<int>("PendingSaleId")
                         .HasColumnType("int");
 
                     b.Property<int>("ProductId")
@@ -252,7 +264,9 @@ namespace Webapi.Migrations
                 {
                     b.HasOne("Webapi.Models.PendingSale", "PendingSale")
                         .WithMany("Details")
-                        .HasForeignKey("PendingSaleId");
+                        .HasForeignKey("PendingSaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Webapi.Models.Product", "Product")
                         .WithMany()
