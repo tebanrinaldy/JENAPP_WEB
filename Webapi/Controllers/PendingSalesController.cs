@@ -81,7 +81,7 @@ namespace Webapi.Controllers
             });
         }
 
-        // GET: api/PendingSales/search?code=XXX&phone=YYY
+        // GET:
       
         [HttpGet("search")]
         [AllowAnonymous]
@@ -180,7 +180,6 @@ namespace Webapi.Controllers
         }
 
         // PUT: 
-       
         [HttpPut("confirm/{id}")]
         [Authorize]
         public async Task<IActionResult> ConfirmPendingSale(int id)
@@ -198,6 +197,10 @@ namespace Webapi.Controllers
             var sale = new Sale
             {
                 Client = pending.Client,
+                Email = pending.Email,
+                Phone = pending.Phone,
+                PaymentMethod = pending.PaymentMethod,
+                Address = pending.Address,
                 Date = DateTime.Now,
                 Total = pending.Total,
                 Details = pending.Details.Select(d => new SaleDetail
