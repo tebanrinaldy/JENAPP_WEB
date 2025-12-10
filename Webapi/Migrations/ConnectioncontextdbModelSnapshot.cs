@@ -39,35 +39,6 @@ namespace Webapi.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("Webapi.Models.Client", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Clients");
-                });
-
             modelBuilder.Entity("Webapi.Models.InventoryMovement", b =>
                 {
                     b.Property<int>("Id")
@@ -108,24 +79,12 @@ namespace Webapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Client")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Phone")
                         .IsRequired()
@@ -222,38 +181,17 @@ namespace Webapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Client")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PaymentMethod")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
 
                     b.ToTable("Sales");
                 });
@@ -352,13 +290,6 @@ namespace Webapi.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("Webapi.Models.Sale", b =>
-                {
-                    b.HasOne("Webapi.Models.Client", null)
-                        .WithMany("Sales")
-                        .HasForeignKey("ClientId");
-                });
-
             modelBuilder.Entity("Webapi.Models.SaleDetail", b =>
                 {
                     b.HasOne("Webapi.Models.Product", "Product")
@@ -376,11 +307,6 @@ namespace Webapi.Migrations
                     b.Navigation("Product");
 
                     b.Navigation("Sale");
-                });
-
-            modelBuilder.Entity("Webapi.Models.Client", b =>
-                {
-                    b.Navigation("Sales");
                 });
 
             modelBuilder.Entity("Webapi.Models.PendingSale", b =>
