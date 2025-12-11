@@ -50,28 +50,14 @@ namespace Webapi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCategory(int id, Category category)
         {
-            if (id != category.Id)
-            {
-                return BadRequest();
-            }
+            var existing = await _context.Categories.FindAsync(id);
 
-            _context.Entry(category).State = EntityState.Modified;
+            if (existing == null)
+                return NotFound();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CategoryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            existing.name = category.name;
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
