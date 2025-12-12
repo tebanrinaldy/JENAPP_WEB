@@ -5,20 +5,13 @@
 namespace Webapi.Migrations
 {
     /// <inheritdoc />
-    public partial class AddTrackingAndStatusToPendingSales : Migration
+    public partial class MigracionInicial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AddColumn<string>(
-                name: "StatusProduct",
-                table: "PendingSales",
-                type: "nvarchar(max)",
-                nullable: false,
-                defaultValue: "");
-
-            migrationBuilder.AddColumn<string>(
-                name: "TrackingCode",
+                name: "PaymentMethod",
                 table: "PendingSales",
                 type: "nvarchar(max)",
                 nullable: false,
@@ -29,11 +22,7 @@ namespace Webapi.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "StatusProduct",
-                table: "PendingSales");
-
-            migrationBuilder.DropColumn(
-                name: "TrackingCode",
+                name: "PaymentMethod",
                 table: "PendingSales");
         }
     }

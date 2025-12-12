@@ -198,6 +198,10 @@ namespace Webapi.Controllers
             var sale = new Sale
             {
                 Client = pending.Client,
+                Email = pending.Email,              
+                Phone = pending.Phone,              
+                Address = pending.Address,          
+                PaymentMethod = pending.PaymentMethod, 
                 Date = DateTime.Now,
                 Total = pending.Total,
                 Details = pending.Details.Select(d => new SaleDetail

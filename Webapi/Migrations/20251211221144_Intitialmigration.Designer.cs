@@ -12,8 +12,8 @@ using Webapi.Data;
 namespace Webapi.Migrations
 {
     [DbContext(typeof(Connectioncontextdb))]
-    [Migration("20251124150745_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20251211221144_Intitialmigration")]
+    partial class Intitialmigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -82,6 +82,10 @@ namespace Webapi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Client")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -89,12 +93,28 @@ namespace Webapi.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StatusProduct")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("TrackingCode")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
