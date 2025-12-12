@@ -1,0 +1,30 @@
+.sales-chart-wrapper {
+  width: 100%;
+  /* fondo blanco y bordes suaves para integrar bien con la card */
+}
+
+.sales-chart-wrapper .recharts-wrapper {
+  /* Evita que se vea ese “bloque” raro gris */
+  background: transparent;
+}
+
+/* Opcional: suavizar fuentes del tooltip */
+.sales-chart-wrapper .recharts-default-tooltip {
+  font-size: 0.85rem;
+}
+
+
+.sales-chart-wrapper {
+  width: 100%;
+  /* fondo blanco y bordes suaves para integrar bien con la card */
+}
+
+.sales-chart-wrapper .recharts-wrapper {
+  /* Evita que se vea ese “bloque” raro gris */
+  background: transparent;
+}
+
+/* Opcional: suavizar fuentes del tooltip */
+.sales-chart-wrapper .recharts-default-tooltip {
+  font-size: 0.85rem;
+}

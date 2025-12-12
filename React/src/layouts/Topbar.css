@@ -1,0 +1,14 @@
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.topbar-user {
+  font-weight: 500;
+  color: #cfd8e3;
+}
+
+
+
+

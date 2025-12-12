@@ -1,0 +1,100 @@
+/* ======= RESET GLOBAL ======= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ======= BASE ======= */
+:root {
+  font-family: 'Segoe UI', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  background-color: #1A334A;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ======= BODY ======= */
+html, body {
+  height: 100%;
+  background-color: #1A334A;
+  color: #ffffff;
+}
+
+/* ======= LINKS ======= */
+a {
+  color: #27E6EC;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+a:hover {
+  color: #1FB8C1;
+}
+
+/* ======= HEADINGS ======= */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1rem;
+}
+
+/* ======= BUTTONS ======= */
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 0.6em 1.2em;
+  border-radius: 0;
+  border: none;
+  background-color: #27E6EC;
+  color: #1A334A;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+button:hover {
+  background-color: #1FB8C1;
+}
+
+.sidebar .btn:hover {
+  background-color: #27E6EC;
+  color: #1A334A;
+}
+
+
+/* ======= IMAGES ======= */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ======= SCROLLBAR ======= */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #1A334A;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #27E6EC;
+  border-radius: 4px;
+}
+
+/* ======= CONTAINERS ======= */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ======= TRANSITIONS ======= */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

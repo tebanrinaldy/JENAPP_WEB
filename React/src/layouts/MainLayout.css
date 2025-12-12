@@ -1,0 +1,50 @@
+.main-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Sidebar fijo desde arriba */
+.sidebar {
+  width: 250px;
+  background-color: #1e2a38;
+  color: white;
+  padding: 2rem 1rem;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+}
+
+/* Contenedor derecho */
+.layout-right {
+  margin-left: 250px; /* igual al ancho del sidebar */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Topbar perfectamente alineado */
+.topbar {
+  height: 60px;
+  background-color: #1e2a38;
+  color: white;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  z-index: 101;
+}
+
+/* Contenido principal */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+  background-color: #e3e6ea;
+}

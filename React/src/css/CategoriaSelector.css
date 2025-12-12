@@ -1,0 +1,15 @@
+.product-card {
+  overflow: hidden;
+  border-radius: 0.75rem;
+}
+
+.product-card-img {
+  width: 100%;
+  height: 180px;  
+  object-fit: cover;
+  display: block;
+}
+.product-card-body {
+  padding: 1rem;
+  background-color: #ffffff;
+}
