@@ -30,6 +30,7 @@ namespace Webapi.Controllers
         }
 
         // GET: api/Users
+        [AllowAnonymous]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
@@ -38,6 +39,7 @@ namespace Webapi.Controllers
         }
 
         // GET: api/Users/5
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
