@@ -14,40 +14,41 @@ var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = LicenseType.Community;
 
 var cadenaconexion = builder.Configuration.GetConnectionString("CadenaConexionDB");
+
 builder.Services.AddDbContext<Connectioncontextdb>(options =>
     options.UseSqlServer(cadenaconexion));
 
-var permitirtodo = "_permitirtodo";
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("PermitirTodo", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+        policy
+            .AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader();
     });
 });
 
 builder.Services.AddControllers();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.WebHost.UseUrls("http://localhost:5132");
-
+// ❌ NO usar localhost fijo en Render
+// builder.WebHost.UseUrls("http://localhost:5132");
 
 builder.Services.AddScoped<JwtTokensGenerator>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+
 builder.Services.AddScoped<Userservice>();
 builder.Services.AddScoped<Saleservice>();
 builder.Services.AddScoped<Productservice>();
 builder.Services.AddScoped<Inventoryservice>();
 builder.Services.AddScoped<Reportsservice>();
 
-
 builder.Services.AddHttpClient("ollama", c =>
 {
-    c.BaseAddress = new Uri("http://localhost:11434"); 
+    c.BaseAddress = new Uri("http://localhost:11434");
 });
 
 builder.Services.AddScoped<ChatbotService>();
@@ -62,29 +63,20 @@ builder.Services.AddAuthentication("Bearer")
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JWTSettings:Key"]))
+                Encoding.UTF8.GetBytes(
+                    builder.Configuration["JWTSettings:Key"]!
+                ))
         };
     });
 
 builder.Services.AddSignalR();
+
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
 
-    var swaggerUrl = "http://localhost:5132/swagger";
-    try
-    {
-        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = swaggerUrl,
-            UseShellExecute = true
-        });
-    }
-    catch { }
-}
+// ✅ Swagger también en producción
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseCors("PermitirTodo");
 
@@ -92,7 +84,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<NotificationsHub>("/hub/notifications");
 
+app.MapHub<NotificationsHub>("/hub/notifications");
 
 app.Run();
